@@ -135,22 +135,21 @@ def open_nbd_connection(server_url="nbd://localhost"):
     nbd_ctx.connect_uri(server_url)
     return nbd_ctx
 
-def read_all(nbd_ctx, size, chunk_size=1024*1024):
+def read_all_to_file(nbd_ctx, size, output_path, chunk_size=64*1024*1024):
     offset = 0
-    data = bytearray()
     last_percent = -1
-    while offset < size:
-        to_read = min(chunk_size, size - offset)
-        chunk = nbd_ctx.pread(to_read, offset)
-        data.extend(chunk)
-        offset += to_read
+    with open(output_path, "wb") as f:
+        while offset < size:
+            to_read = min(chunk_size, size - offset)
+            chunk = nbd_ctx.pread(to_read, offset)
+            f.write(chunk)
+            offset += to_read
 
-        percent = int(offset * 100 / size)
-        if percent != last_percent:
-            print(f"\rCopy progress: {percent}% ({offset}/{size} bytes)", end='', flush=True)
-            last_percent = percent
+            percent = int(offset * 100 / size)
+            if percent != last_percent:
+                print(f"\rCopy progress: {percent}% ({offset/(1024*1024*1024)}/{size/(1024*1024*1024)} GB)", end='', flush=True)
+                last_percent = percent
     print()  # Newline after completion
-    return data
 
 def read_blocks(nbd_ctx, blocks):
     block_data = {}
@@ -196,7 +195,7 @@ def apply_delta_to_full(full_path, delta_path, merged_output_path):
     print(f"Merged disk image written to {merged_output_path}")
 
 def main():
-    vcenter = "vcsa.example.local"
+    vcenter = "vcsa.lab.local"
     user = "Administrator@vsphere.local"
     pwd = "Test"
     vm_name = "VM_MIGRATION_TEST"
@@ -245,10 +244,7 @@ def main():
 
         print(f"Copying full disk data for disk {idx}...")
         full_size = disk.capacityInBytes
-        full_data = read_all(nbd_ctx, full_size)
-        with open(output_full, "wb") as f:
-            f.write(full_data)
-        print(f"Disk {idx} full copy saved to {output_full}")
+        read_all_to_file(nbd_ctx, full_size, output_full)
 
         terminate_nbdkit(nbdkit_proc)
         nbd_ctx.close()
