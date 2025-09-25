@@ -1,0 +1,8 @@
+sudo yum install wget -y
+wget https://bootstrap.pypa.io/get-pip.py
+python3 get-pip.py
+python3 -m pip install pyvmomi
+sudo yum install nbdkit -y
+sudo yum install libnbd -y
+sudo yum install nbdkit-vddk-plugin -y
+sudo yum install python3-libnbd -y
