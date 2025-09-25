@@ -11,7 +11,6 @@ from pyVmomi import vim
 import nbd
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
-
 def get_ssl_thumbprint(host, port=443):
     context = ssl._create_unverified_context()  # Disable cert verification for simplicity
     conn = socket.create_connection((host, port))
@@ -21,12 +20,10 @@ def get_ssl_thumbprint(host, port=443):
     sock.close()
     return ":".join(thumbprint[i:i + 2] for i in range(0, len(thumbprint), 2))
 
-
 def connect_vsphere(host, user, pwd):
     context = ssl._create_unverified_context()
     si = SmartConnect(host=host, user=user, pwd=pwd, sslContext=context)
     return si
-
 
 def remove_all_snapshots(vm):
     if not vm.snapshot:
@@ -46,7 +43,6 @@ def remove_all_snapshots(vm):
     recursive_remove(vm.snapshot.rootSnapshotList)
     print("All snapshots removed.")
 
-
 def find_vm(si, vm_name):
     content = si.RetrieveContent()
     container = content.viewManager.CreateContainerView(content.rootFolder, [vim.VirtualMachine], True)
@@ -54,7 +50,6 @@ def find_vm(si, vm_name):
         if vm.name == vm_name:
             return vm
     return None
-
 
 def enable_cbt(vm):
     spec = vim.vm.ConfigSpec()
@@ -64,7 +59,6 @@ def enable_cbt(vm):
     if task.info.state == 'error':
         raise Exception(f"CBT enable failed: {task.info.error.msg}")
 
-
 def create_snapshot(vm, name, desc="Snapshot", memory=False, quiesce=True):
     task = vm.CreateSnapshot_Task(name=name, description=desc, memory=memory, quiesce=quiesce)
     wait_for_task(task)
@@ -72,13 +66,11 @@ def create_snapshot(vm, name, desc="Snapshot", memory=False, quiesce=True):
         raise Exception(f"Snapshot creation failed: {task.info.error.msg}")
     return task.info.result
 
-
 def remove_snapshot(snapshot, remove_children=False):
     task = snapshot.RemoveSnapshot_Task(removeChildren=remove_children)
     wait_for_task(task)
     if task.info.state == 'error':
         raise Exception(f"Snapshot removal failed: {task.info.error.msg}")
-
 
 def poweroff_vm(vm):
     if vm.runtime.powerState != vim.VirtualMachinePowerState.poweredOff:
@@ -87,17 +79,14 @@ def poweroff_vm(vm):
         if task.info.state == 'error':
             raise Exception(f"Failed to power off VM: {task.info.error.msg}")
 
-
 def wait_for_task(task):
     while task.info.state not in [vim.TaskInfo.State.success, vim.TaskInfo.State.error]:
         time.sleep(1)
 
-
-# Updated to use only the current snapshot per vSphere API compatibility
-def get_cbt_changed_blocks(vm, target_disk_key,changeId):
+def get_cbt_changed_blocks(vm, target_disk_key, changeId):
     changed_areas = []
     try:
-        changes = vm.QueryChangedDiskAreas(deviceKey=target_disk_key,startOffset=0,changeId=changeId)
+        changes = vm.QueryChangedDiskAreas(deviceKey=target_disk_key, startOffset=0, changeId=changeId)
         sectorsize = 512
         for change in changes.changedArea:
             offset_bytes = change.offset * sectorsize
@@ -107,11 +96,10 @@ def get_cbt_changed_blocks(vm, target_disk_key,changeId):
         print(f"Error querying changed disk areas: {e}")
     return changed_areas
 
-
 def start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snapshot_moref):
     cmd = [
         "nbdkit", "vddk", "libdir=/root/python_migration/vmware-vix-disklib-distrib",
-        "--verbose",
+        # "--verbose",
         "--exit-with-parent",
         f"user={user}",
         f"password={pwd}",
@@ -130,17 +118,14 @@ def start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snapshot_m
     time.sleep(5)  # Allow nbdkit to initialize
     return proc
 
-
 def terminate_nbdkit(proc):
     proc.terminate()
     proc.wait()
-
 
 def open_nbd_connection(server_url="nbd://localhost"):
     nbd_ctx = nbd.NBD()
     nbd_ctx.connect_uri(server_url)
     return nbd_ctx
-
 
 def full_copy_with_nbdcopy(vmdk_nbd_url, output_file, total_size):
     print("Starting full copy with nbdcopy and progress display...")
@@ -157,7 +142,6 @@ def full_copy_with_nbdcopy(vmdk_nbd_url, output_file, total_size):
     proc.wait()
     print("\nFull disk copy completed.")
 
-
 def read_chunk_with_retry(nbd_ctx, offset, length, retries=3, delay=2):
     for attempt in range(1, retries + 1):
         try:
@@ -169,7 +153,6 @@ def read_chunk_with_retry(nbd_ctx, offset, length, retries=3, delay=2):
                 raise
             time.sleep(delay)
 
-
 def read_blocks(nbd_ctx, blocks):
     block_data = {}
     total_blocks = len(blocks)
@@ -180,7 +163,6 @@ def read_blocks(nbd_ctx, blocks):
     print()
     return block_data
 
-
 def write_delta_file(blocks_data, output_path):
     with open(output_path, "wb") as f:
         for offset in sorted(blocks_data.keys()):
@@ -189,7 +171,6 @@ def write_delta_file(blocks_data, output_path):
             f.write(len(data).to_bytes(8, 'big'))
             f.write(data)
     print(f"Delta output written to {output_path}")
-
 
 def apply_delta_to_full(full_path, delta_path, merged_output_path):
     with open(full_path, "rb") as f_full:
@@ -215,11 +196,20 @@ def apply_delta_to_full(full_path, delta_path, merged_output_path):
         f_out.write(full_data)
     print(f"Merged disk image written to {merged_output_path}")
 
+def get_snapshot_disk_path(snapshot, original_disk):
+    # Traverse snapshot config hardware to find disk backing for original disk key
+    snap_config = getattr(snapshot, 'config', None)
+    if snap_config:
+        for dev in snap_config.hardware.device:
+            if isinstance(dev, vim.vm.device.VirtualDisk) and dev.key == original_disk.key:
+                return dev.backing.fileName
+    # Fallback to original disk path if snapshot config unavailable
+    return original_disk.backing.fileName
 
 def main():
-    vcenter = "vcsa.test.local"
+    vcenter = "vcsa.cloudbricks.local"
     user = "Administrator@vsphere.local"
-    pwd = "test!"
+    pwd = "VMware1!"
     vm_name = "VM_MIGRATION_TEST"
 
     try:
@@ -250,7 +240,8 @@ def main():
         for idx, disk in enumerate(disks):
             print(f"Processing disk {idx}: {disk.backing.fileName}")
 
-            vmdk_path = disk.backing.fileName
+            # Use snapshot disk backing path for live consistent copy
+            vmdk_path = get_snapshot_disk_path(snap1, disk)
             disk_key = disk.key
 
             output_full = f"{vm_name}_disk{idx}_full_copy.raw"
@@ -269,9 +260,9 @@ def main():
 
         print("Removing first snapshot...")
         remove_snapshot(snap1)
-        # time.sleep(100)
+
         print("Powering off VM...")
-        # poweroff_vm(vm)
+        poweroff_vm(vm)
 
         print("Creating second snapshot (powered off)...")
         snap2 = create_snapshot(vm, "delta_copy_snapshot", quiesce=False)
@@ -285,14 +276,13 @@ def main():
 
             vmdk_path = disk.backing.fileName
             disk_key = disk.key
-            changeId = disk.backing.changeId
+            changeId = getattr(disk.backing, 'changeId', None)
 
             output_full, output_delta, merged_output = merged_images[idx]
 
-            changed_blocks = get_cbt_changed_blocks(vm, disk_key,changeId)
+            changed_blocks = get_cbt_changed_blocks(vm, disk_key, changeId)
             print(f"Disk {idx} changed blocks: {len(changed_blocks)}")
-            if(len(changed_blocks)>0):
-
+            if len(changed_blocks) > 0:
                 print(f"Starting nbdkit for delta copy disk {idx}...")
                 nbdkit_proc = start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snap2._moId)
                 nbd_ctx = open_nbd_connection()
@@ -328,7 +318,6 @@ def main():
         print("Disconnected from vCenter.")
 
     print("All disks processed. Workflow completed successfully.")
-
 
 if __name__ == "__main__":
     main()
