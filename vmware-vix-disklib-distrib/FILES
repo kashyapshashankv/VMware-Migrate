@@ -1,0 +1,142 @@
+vmware-vix-disklib-distrib:
+total 4
+drwxr-xr-x 2 mts mts   73 Sep 24 21:44 bin64
+drwxr-xr-x 6 mts mts  230 Sep 24 21:37 doc
+drwxr-xr-x 2 mts mts   95 Sep 24 21:37 include
+drwxr-xr-x 2 mts mts    6 Sep 24 21:32 lib32
+drwxr-xr-x 2 mts mts 4096 Sep 24 21:44 lib64
+
+vmware-vix-disklib-distrib/bin64:
+total 4180
+-rwxr-xr-x 1 mts mts   39416 Sep 24 21:32 vddkReporter
+-rwxr-xr-x 1 mts mts 1001232 Sep 24 21:44 vixDiskCheck
+-rwxr-xr-x 1 mts mts 3235360 Sep 24 21:32 vmware-vdiskmanager
+
+vmware-vix-disklib-distrib/doc:
+total 656
+-r--r--r-- 1 mts mts  12020 Sep 24 21:37 EULA
+-r--r--r-- 1 mts mts    836 Sep 24 21:37 copyright.html
+drwxr-xr-x 2 mts mts     70 Sep 24 21:37 errors
+-r--r--r-- 1 mts mts   4777 Sep 24 21:37 foundrydoc.css
+drwxr-xr-x 2 mts mts   4096 Sep 24 21:37 functions
+-r--r--r-- 1 mts mts    442 Sep 24 21:37 index.html
+-r--r--r-- 1 mts mts   5905 Sep 24 21:37 intro.html
+-r--r--r-- 1 mts mts    920 Sep 24 21:37 intro_toc.html
+-r--r--r-- 1 mts mts 622531 Sep 24 21:37 open_source_licenses.txt
+drwxr-xr-x 3 mts mts     21 Sep 24 21:37 samples
+-r--r--r-- 1 mts mts   1145 Sep 24 21:37 topics.html
+drwxr-xr-x 2 mts mts     91 Sep 24 21:37 types
+
+vmware-vix-disklib-distrib/doc/errors:
+total 84
+-rw-r--r-- 1 mts mts 42067 Sep 24 21:37 errors.html
+-rw-r--r-- 1 mts mts 28938 Sep 24 21:37 errorsList.html
+-r--r--r-- 1 mts mts  4777 Sep 24 21:37 foundrydoc.css
+
+vmware-vix-disklib-distrib/doc/functions:
+total 164
+-rw-r--r-- 1 mts mts 1166 Sep 24 21:37 VixDiskLib_Attach.html
+-rw-r--r-- 1 mts mts 1641 Sep 24 21:37 VixDiskLib_CheckRepair.html
+-rw-r--r-- 1 mts mts 1833 Sep 24 21:37 VixDiskLib_Cleanup.html
+-rw-r--r-- 1 mts mts 2722 Sep 24 21:37 VixDiskLib_Clone.html
+-rw-r--r-- 1 mts mts  865 Sep 24 21:37 VixDiskLib_Close.html
+-rw-r--r-- 1 mts mts 2056 Sep 24 21:37 VixDiskLib_Connect.html
+-rw-r--r-- 1 mts mts 4764 Sep 24 21:37 VixDiskLib_ConnectEx.html
+-rw-r--r-- 1 mts mts 2038 Sep 24 21:37 VixDiskLib_Create.html
+-rw-r--r-- 1 mts mts 1810 Sep 24 21:37 VixDiskLib_CreateChild.html
+-rw-r--r-- 1 mts mts 1444 Sep 24 21:37 VixDiskLib_Defragment.html
+-rw-r--r-- 1 mts mts  788 Sep 24 21:37 VixDiskLib_Disconnect.html
+-rw-r--r-- 1 mts mts 2048 Sep 24 21:37 VixDiskLib_EndAccess.html
+-rw-r--r-- 1 mts mts  670 Sep 24 21:37 VixDiskLib_Exit.html
+-rw-r--r-- 1 mts mts  839 Sep 24 21:37 VixDiskLib_FreeErrorText.html
+-rw-r--r-- 1 mts mts  900 Sep 24 21:37 VixDiskLib_FreeInfo.html
+-rw-r--r-- 1 mts mts 1038 Sep 24 21:37 VixDiskLib_GetErrorText.html
+-rw-r--r-- 1 mts mts 1407 Sep 24 21:37 VixDiskLib_GetInfo.html
+-rw-r--r-- 1 mts mts 2009 Sep 24 21:37 VixDiskLib_GetMetadataKeys.html
+-rw-r--r-- 1 mts mts 1560 Sep 24 21:37 VixDiskLib_GetTransportMode.html
+-rw-r--r-- 1 mts mts 1861 Sep 24 21:37 VixDiskLib_Grow.html
+-rw-r--r-- 1 mts mts 2417 Sep 24 21:37 VixDiskLib_Init.html
+-rw-r--r-- 1 mts mts 2855 Sep 24 21:37 VixDiskLib_InitEx.html
+-rw-r--r-- 1 mts mts 1005 Sep 24 21:37 VixDiskLib_ListTransportModes.html
+-rw-r--r-- 1 mts mts 2273 Sep 24 21:37 VixDiskLib_Open.html
+-rw-r--r-- 1 mts mts 2050 Sep 24 21:37 VixDiskLib_PrepareForAccess.html
+-rw-r--r-- 1 mts mts 1520 Sep 24 21:37 VixDiskLib_Read.html
+-rw-r--r-- 1 mts mts 1759 Sep 24 21:37 VixDiskLib_ReadMetadata.html
+-rw-r--r-- 1 mts mts  950 Sep 24 21:37 VixDiskLib_Rename.html
+-rw-r--r-- 1 mts mts 1488 Sep 24 21:37 VixDiskLib_Shrink.html
+-rw-r--r-- 1 mts mts 1419 Sep 24 21:37 VixDiskLib_SpaceNeededForClone.html
+-rw-r--r-- 1 mts mts 1168 Sep 24 21:37 VixDiskLib_Unlink.html
+-rw-r--r-- 1 mts mts 1493 Sep 24 21:37 VixDiskLib_Write.html
+-rw-r--r-- 1 mts mts 1334 Sep 24 21:37 VixDiskLib_WriteMetadata.html
+-rw-r--r-- 1 mts mts  293 Sep 24 21:37 deprecatedfunctionList.html
+-rw-r--r-- 1 mts mts 3048 Sep 24 21:37 functionList.html
+-rw-r--r-- 1 mts mts  291 Sep 24 21:37 handleclassList.html
+-rw-r--r-- 1 mts mts  294 Sep 24 21:37 opclassList.html
+-rw-r--r-- 1 mts mts  290 Sep 24 21:37 removedfunctionList.html
+-rw-r--r-- 1 mts mts  410 Sep 24 21:37 supportGuest.html
+-rw-r--r-- 1 mts mts 3542 Sep 24 21:37 supportMatrix.html
+
+vmware-vix-disklib-distrib/doc/samples:
+total 0
+drwxr-xr-x 2 mts mts 97 Sep 24 21:38 diskLib
+
+vmware-vix-disklib-distrib/doc/samples/diskLib:
+total 4932
+-r--r--r-- 1 mts mts     606 Sep 24 21:37 Makefile
+-rwxr-xr-x 2 mts mts 2312488 Sep 24 21:38 vixDiskLibSample
+-rw-r--r-- 1 mts mts   95148 Sep 24 21:37 vixDiskLibSample.cpp
+-rwxr-xr-x 2 mts mts 2633144 Sep 24 21:38 vixMntapiSample
+
+vmware-vix-disklib-distrib/doc/types:
+total 12
+-rw-r--r-- 1 mts mts 1881 Sep 24 21:37 VixDiskLibDiskType.html
+-rw-r--r-- 1 mts mts 2064 Sep 24 21:37 VixDiskLibHwVersion.html
+-rw-r--r-- 1 mts mts  439 Sep 24 21:37 typesList.html
+
+vmware-vix-disklib-distrib/include:
+total 96
+-rw-r--r-- 1 mts mts 51790 Sep 24 21:37 vixDiskLib.h
+-r--r--r-- 1 mts mts  2365 Sep 24 21:37 vixDiskLibPlugin.h
+-r--r--r-- 1 mts mts 10391 Sep 24 21:37 vixMntapi.h
+-rw-r--r-- 1 mts mts 26167 Sep 24 21:37 vm_basic_types.h
+
+vmware-vix-disklib-distrib/lib32:
+total 0
+
+vmware-vix-disklib-distrib/lib64:
+total 62620
+lrwxrwxrwx 1 mts mts       13 Sep 24 21:44 libcares.so -> libcares.so.2
+-rwxr-xr-x 1 mts mts    82416 Sep 24 21:37 libcares.so.2
+lrwxrwxrwx 1 mts mts       14 Sep 24 21:44 libcrypto.so -> libcrypto.so.1
+lrwxrwxrwx 1 mts mts       18 Sep 24 21:44 libcrypto.so.1 -> libcrypto.so.1.0.2
+-rwxr-xr-x 1 mts mts  2870992 Sep 24 21:37 libcrypto.so.1.0.2
+lrwxrwxrwx 1 mts mts       12 Sep 24 21:44 libcurl.so -> libcurl.so.4
+-rwxr-xr-x 1 mts mts   536320 Sep 24 21:37 libcurl.so.4
+-rwxr-xr-x 1 mts mts  3235160 Sep 24 21:44 libdiskLibPlugin.so
+-rwxr-xr-x 1 mts mts   186160 Sep 24 21:37 libexpat.so
+lrwxrwxrwx 1 mts mts       13 Sep 24 21:44 libgcc_s.so -> libgcc_s.so.1
+-rw-r--r-- 1 mts mts   100944 Sep 24 21:37 libgcc_s.so.1
+-rwxr-xr-x 1 mts mts   325904 Sep 24 21:37 liblookup-types.so
+lrwxrwxrwx 1 mts mts       15 Sep 24 21:44 libsqlite3.so -> libsqlite3.so.0
+lrwxrwxrwx 1 mts mts       19 Sep 24 21:44 libsqlite3.so.0 -> libsqlite3.so.0.8.6
+-rwxr-xr-x 1 mts mts   999328 Sep 24 21:37 libsqlite3.so.0.8.6
+lrwxrwxrwx 1 mts mts       11 Sep 24 21:44 libssl.so -> libssl.so.1
+lrwxrwxrwx 1 mts mts       15 Sep 24 21:44 libssl.so.1 -> libssl.so.1.0.2
+-rwxr-xr-x 1 mts mts   464520 Sep 24 21:37 libssl.so.1.0.2
+-rwxr-xr-x 1 mts mts   444736 Sep 24 21:37 libssoclient.so
+lrwxrwxrwx 1 mts mts       14 Sep 24 21:44 libstdc++.so -> libstdc++.so.6
+-rwxr-xr-x 1 mts mts  1956512 Sep 24 21:37 libstdc++.so.6
+lrwxrwxrwx 1 mts mts       21 Sep 24 21:44 libvddkVimAccess.so -> libvddkVimAccess.so.8
+lrwxrwxrwx 1 mts mts       25 Sep 24 21:44 libvddkVimAccess.so.8 -> libvddkVimAccess.so.8.0.0
+-rwxrwxr-x 1 mts mts  2496856 Sep 24 21:44 libvddkVimAccess.so.8.0.0
+-rwxr-xr-x 1 mts mts 33696024 Sep 24 21:44 libvim-types.so
+lrwxrwxrwx 1 mts mts       18 Sep 24 21:44 libvixDiskLib.so -> libvixDiskLib.so.8
+lrwxrwxrwx 1 mts mts       22 Sep 24 21:44 libvixDiskLib.so.8 -> libvixDiskLib.so.8.0.0
+-rwxrwxr-x 1 mts mts  2881560 Sep 24 21:37 libvixDiskLib.so.8.0.0
+lrwxrwxrwx 1 mts mts       17 Sep 24 21:44 libvixMntapi.so -> libvixMntapi.so.1
+lrwxrwxrwx 1 mts mts       21 Sep 24 21:44 libvixMntapi.so.1 -> libvixMntapi.so.1.1.0
+-rwxrwxr-x 1 mts mts  3222208 Sep 24 21:38 libvixMntapi.so.1.1.0
+-rwxr-xr-x 1 mts mts  7048536 Sep 24 21:37 libvmacore.so
+-rwxr-xr-x 1 mts mts  3429424 Sep 24 21:37 libvmomi.so
+lrwxrwxrwx 1 mts mts        9 Sep 24 21:44 libz.so -> libz.so.1
+-rwxr-xr-x 1 mts mts   116872 Sep 24 21:37 libz.so.1
