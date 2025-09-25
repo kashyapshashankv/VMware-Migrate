@@ -104,11 +104,11 @@ def get_cbt_changed_blocks(vm, start_snap_obj, curr_snap_obj, disk_key):
 
 def start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snapshot_moref):
     cmd = [
-        "nbdkit", "vddk","libdir=/root/vmware-vix-disklib-distrib",
-        "--verbose",
+        "nbdkit", "vddk","libdir=/root/python_migration/vmware-vix-disklib-distrib",
+        # "--verbose",
         "--exit-with-parent",
-        "-D vddk.datapath=0",
-		"-D nbdkit.backend.datapath=0",
+        # "-D vddk.datapath=0",
+		# "-D nbdkit.backend.datapath=0",
         f"user={user}",
         f"password={pwd}",
         f"server={vcenter}",
@@ -117,7 +117,7 @@ def start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snapshot_m
         "--readonly",
 		"compression=fastlz",
         "transports=nbd",
-        "config=/root/vddk.conf",
+        "config=/root/python_migration/vddk.conf",
         f"vm=moref={vm_moref}",
         f"snapshot={snapshot_moref}",
         vmdk_path,
@@ -131,17 +131,17 @@ def terminate_nbdkit(proc):
     proc.wait()
 
 def open_nbd_connection(server_url="nbd://localhost"):
-    nbd = nbd.NBD()
-    nbd.connect_uri(server_url.encode("utf-8"))
-    return nbd
+    nbd_ctx = nbd.NBD()
+    nbd_ctx.connect_uri(server_url)
+    return nbd_ctx
 
-def read_all(nbd, size, chunk_size=1024*1024):
+def read_all(nbd_ctx, size, chunk_size=1024*1024):
     offset = 0
     data = bytearray()
     last_percent = -1
     while offset < size:
         to_read = min(chunk_size, size - offset)
-        chunk = nbd.pread(to_read, offset)
+        chunk = nbd_ctx.pread(to_read, offset)
         data.extend(chunk)
         offset += to_read
 
@@ -152,11 +152,11 @@ def read_all(nbd, size, chunk_size=1024*1024):
     print()  # Newline after completion
     return data
 
-def read_blocks(nbd, blocks):
+def read_blocks(nbd_ctx, blocks):
     block_data = {}
     total_blocks = len(blocks)
     for idx, (offset, length) in enumerate(blocks, start=1):
-        data = nbd.pread(length, offset)
+        data = nbd_ctx.pread(length, offset)
         block_data[offset] = data
         print(f"\rReading changed blocks: {idx}/{total_blocks}", end='', flush=True)
     print()
@@ -196,9 +196,9 @@ def apply_delta_to_full(full_path, delta_path, merged_output_path):
     print(f"Merged disk image written to {merged_output_path}")
 
 def main():
-    vcenter = "vcsa.test.local"
+    vcenter = "vcsa.example.local"
     user = "Administrator@vsphere.local"
-    pwd = "test"
+    pwd = "Test"
     vm_name = "VM_MIGRATION_TEST"
 
     si = connect_vsphere(vcenter, user, pwd)
@@ -241,17 +241,17 @@ def main():
         # Full copy
         print(f"Starting nbdkit for full copy disk {idx}...")
         nbdkit_proc = start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snap1._moId)
-        nbd = open_nbd_connection()
+        nbd_ctx = open_nbd_connection()
 
         print(f"Copying full disk data for disk {idx}...")
         full_size = disk.capacityInBytes
-        full_data = read_all(nbd, full_size)
+        full_data = read_all(nbd_ctx, full_size)
         with open(output_full, "wb") as f:
             f.write(full_data)
         print(f"Disk {idx} full copy saved to {output_full}")
 
         terminate_nbdkit(nbdkit_proc)
-        nbd.close()
+        nbd_ctx.close()
 
         # Store outputs info for later merging
         merged_images.append((output_full, output_delta, merged_output))
@@ -282,13 +282,13 @@ def main():
 
         print(f"Starting nbdkit for delta copy disk {idx}...")
         nbdkit_proc = start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snap2._moId)
-        nbd = open_nbd_connection()
+        nbd_ctx = open_nbd_connection()
 
-        blocks_data = read_blocks(nbd, changed_blocks)
+        blocks_data = read_blocks(nbd_ctx, changed_blocks)
         write_delta_file(blocks_data, output_delta)
 
         terminate_nbdkit(nbdkit_proc)
-        nbd.close()
+        nbd_ctx.close()
 
         print(f"Applying delta to full copy for disk {idx}...")
         apply_delta_to_full(output_full, output_delta, merged_output)
