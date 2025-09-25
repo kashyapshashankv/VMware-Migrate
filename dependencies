@@ -6,3 +6,4 @@ sudo yum install nbdkit -y
 sudo yum install libnbd -y
 sudo yum install nbdkit-vddk-plugin -y
 sudo yum install python3-libnbd -y
+sudo yum install nbdkit-guestfs-plugin -y
