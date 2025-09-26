@@ -55,6 +55,15 @@ def find_vm(si, vm_name):
             return vm
     return None
 
+def is_cbt_enabled(vm):
+    # Check global CBT flag on the VM
+    global_cbt = getattr(vm.config, 'changeTrackingEnabled', False)
+    if not global_cbt:
+        print("CBT is not enabled globally on the VM.")
+        return False
+    else:
+        return True
+
 
 def enable_cbt(vm):
     spec = vim.vm.ConfigSpec()
@@ -66,6 +75,7 @@ def enable_cbt(vm):
 
 
 def create_snapshot(vm, name, desc="Snapshot", memory=False, quiesce=True):
+    print(f"Creating Snaphot for {vm.name} with name {name}")
     task = vm.CreateSnapshot_Task(name=name, description=desc, memory=memory, quiesce=quiesce)
     wait_for_task(task)
     if task.info.state == 'error':
@@ -96,12 +106,11 @@ def wait_for_task(task):
 def get_cbt_changed_blocks(vm, target_disk_key, changeId):
     changed_areas = []
     try:
-        print(f"Querying changed disk areas with changeId={changeId} for disk key={target_disk_key}")
+        # print(f"Querying changed disk areas with changeId={changeId} for disk key={target_disk_key}")
         changes = vm.QueryChangedDiskAreas(deviceKey=target_disk_key, startOffset=0, changeId=changeId)
-        sectorsize = 512
         for change in changes.changedArea:
-            offset_bytes = change.offset * sectorsize
-            length_bytes = change.length * sectorsize
+            offset_bytes = change.start
+            length_bytes = change.length
             changed_areas.append((offset_bytes, length_bytes))
         print(f"Found {len(changed_areas)} changed areas")
     except Exception as e:
@@ -223,8 +232,10 @@ def get_snapshot_disk_path(snapshot, original_disk):
     if snap_config:
         for dev in snap_config.hardware.device:
             if isinstance(dev, vim.vm.device.VirtualDisk) and dev.key == original_disk.key:
+                print("Snaphsot Disk Path Found")
                 return dev
     # Fallback to original disk path if snapshot config unavailable
+    print("Snaphsot Disk Path Not-Found, Reverting for Original Disk")
     return original_disk
 
 
@@ -234,7 +245,7 @@ def main():
     vcenter = "vcsa.cloudbricks.local"
     user = "Administrator@vsphere.local"
     pwd = "VMware1!"
-    vm_name = "VM_MIGRATION_TEST"
+    vm_name = "teleport"
 
     try:
         si = connect_vsphere(vcenter, user, pwd)
@@ -242,14 +253,20 @@ def main():
         if not vm:
             raise RuntimeError(f"VM '{vm_name}' not found")
         vm_moref = vm._moId
-
-        thumbprint = get_ssl_thumbprint(vcenter)
-
-        print("Enabling CBT...")
-        enable_cbt(vm)
-
         remove_all_snapshots(vm)
-
+        thumbprint = get_ssl_thumbprint(vcenter)
+        if(not is_cbt_enabled(vm)):
+            print("Enabling CBT...")
+            enable_cbt(vm)
+            
+            temp_snp = create_snapshot(vm, "temp", quiesce=False)
+            remove_snapshot(temp_snp)
+            if(is_cbt_enabled(vm)):
+                temp_snp = create_snapshot(vm, "temp", quiesce=False)
+                remove_snapshot(temp_snp)
+                if(is_cbt_enabled(vm)):
+                    temp_snp = create_snapshot(vm, "temp", quiesce=False)
+                    remove_snapshot(temp_snp)
         print("Creating first snapshot (powered on, quiesced)...")
         snap1 = create_snapshot(vm, "full_copy_snapshot", quiesce=True)
 
@@ -262,15 +279,19 @@ def main():
         print(f"Found {len(disks)} disks. Starting processing for each disk...")
 
         for idx, disk in enumerate(disks):
-            
-
-            # Use snapshot disk backing path for live consistent copy
-            snapshot = get_snapshot_disk_path(snap1, disk)
-            vmdk_path = snapshot.backing.fileName
-            print(f"Processing disk {idx}: {vmdk_path}")
             output_full = f"{vm_name}_disk{idx}_full_copy.raw"
             output_delta = f"{vm_name}_disk{idx}_delta_copy.dat"
             merged_output = f"{vm_name}_disk{idx}_merged_disk_image.raw"
+            changeID_output = f"{vm_name}_disk{idx}_changeID"
+
+            # Use snapshot disk backing path for live consistent copy
+            snapshot = get_snapshot_disk_path(snap1, disk)
+            changeId = getattr(snapshot.backing, 'changeId', None)
+            with open(changeID_output, "w") as f:
+                f.write(changeId)
+            vmdk_path = snapshot.backing.fileName
+            print(f"Processing disk {idx}: {vmdk_path}")
+            
 
             print(f"Starting nbdkit for full copy disk {idx}...")
             nbdkit_proc = start_nbdkit(vcenter, user, pwd, thumbprint, vm_moref, vmdk_path, snap1._moId)
@@ -280,11 +301,11 @@ def main():
 
             terminate_nbdkit(nbdkit_proc)
 
-            merged_images.append((output_full, output_delta, merged_output))
+            merged_images.append((output_full, output_delta, merged_output,changeID_output))
 
-        print("Removing first snapshot...")
+        print("Removing first snapshot.")
         remove_snapshot(snap1)
-        time.sleep(100)
+        input("Press Enter to continue | System will PowerOff | for testing, do any changes in the vm required")
         print("Powering off VM...")
         poweroff_vm(vm)
 
@@ -294,20 +315,19 @@ def main():
         disks = [dev for dev in vm.config.hardware.device if isinstance(dev, vim.vm.device.VirtualDisk)]
         if not disks:
             raise RuntimeError("No VM virtual disks found")
-
         for idx, disk in enumerate(disks):
             # print(f"Processing delta copy for disk {idx}: {disk.backing.fileName}")
+            output_full, output_delta, merged_output, changeID_output = merged_images[idx]
             snapshot = get_snapshot_disk_path(snap2, disk)
             vmdk_path = snapshot.backing.fileName
             disk_key = snapshot.key
             print(f"Processing delta copy for disk {idx}: {vmdk_path}")
-            changeId = getattr(disk.backing, 'changeId', None)
-            print(f"Disk {idx} changeId: {changeId}")
-            if changeId is None:
+            with open(changeID_output, 'r') as content_file:
+                changeId = content_file.read()
+            print(f"Disk {idx} previous changeId: {changeId}")
+            if "None" in changeId:
                 print(f"No changeId found for disk {idx}. Skipping delta copy.")
                 continue
-
-            output_full, output_delta, merged_output = merged_images[idx]
 
             changed_blocks = get_cbt_changed_blocks(vm, disk_key, changeId)
             print(f"Disk {idx} changed blocks count: {len(changed_blocks)}")
@@ -320,11 +340,13 @@ def main():
                 blocks_data = read_blocks(nbd_ctx, changed_blocks)
                 write_delta_file(blocks_data, output_delta)
 
-                terminate_nbdkit(nbdkit_proc)
-                nbd_ctx.close()
-
                 print(f"Applying delta to full copy for disk {idx}...")
                 apply_delta_to_full(output_full, output_delta, merged_output)
+
+                terminate_nbdkit(nbdkit_proc)
+                # nbd_ctx.close()
+
+
 
                 os.remove(output_full)
                 os.remove(output_delta)
